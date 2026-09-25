@@ -55,7 +55,21 @@ The backend action router selects continue-chat, sales alert, and/or calendar-bo
 
 ## Database Schema v1.0
 
-Conceptual ERD:
+The implemented Phase 1A schema (Decision D-013) is authoritative for the current codebase.
+
+### Authoritative Implemented Schema (Phase 1A)
+
+The implemented relational schema establishes six domain entities plus back-office Admin accounts:
+- `Conversation` 1—many `Message`
+- `Conversation` 1—0..1 `Lead`
+- `Lead` 1—1 `BANTState` (identifying 1:1 via shared primary key `lead_id`, typed dimension status fields `budget_status`, `authority_level`, `need_clarity`, `timeline_urgency`, exact `budget_amount` NUMERIC + currency, evidence text, and nullable confidence fields `budget_confidence`, `authority_confidence`, `need_confidence`, `timeline_confidence` in `[0.0, 1.0]`)
+- `Lead` 1—many `LeadScoreHistory` (immutable score trajectory snapshots with optional triggering `message_id`)
+- `Lead` 1—many `RoutingAction` (automated actions with unique `idempotency_key`, action types `continue_chat`, `sales_alert`, `calendar_booking`, and statuses `pending`, `success`, `failed`)
+- `Admin` (back-office accounts with bcrypt password hash and unique email)
+
+### Pre-Implementation Conceptual Baseline (Historical / Superseded Design)
+
+Initial Day 1 conceptual design (Decision D-010, superseded by D-013 in Phase 1A):
 
 ```text
 Lead 1—1 BANTProfile

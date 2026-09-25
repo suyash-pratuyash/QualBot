@@ -13,11 +13,24 @@ Record of accepted project-level decisions. Synopsis requirements and engineerin
 | D-007 | Persist actions and protect each logical action with a unique idempotency key. | Retries and repeated processing must not duplicate email alerts or calendar actions. | Accepted |
 | D-008 | Use React + Vite + Tailwind; Python + FastAPI; WebSockets; Gemini; Calendly API; EmailJS; SQLite locally and PostgreSQL/Supabase for deployment. | Follows baseline stack in project instructions/synopsis interpretation. | Accepted |
 | D-009 | Use SQLAlchemy 2.x and Alembic across SQLite/PostgreSQL; UUID identifiers, UTC timestamps, string-backed enums, exact decimal budget values, and relational BANT. | One portable model/migration path, controlled application enums, and queryable core data. | Accepted |
-| D-010 | Freeze conceptual ERD and Database Schema v1.0 as Lead, BANTProfile, Conversation, Message, BANTSnapshot, ScoreHistory, and Action entities with stated relationships. | Separates current state, conversation history, scoring history, and external side effects. | Accepted |
+| D-010 | Freeze conceptual ERD and Database Schema v1.0 as Lead, BANTProfile, Conversation, Message, BANTSnapshot, ScoreHistory, and Action entities with stated relationships. | Separates current state, conversation history, scoring history, and external side effects. | Superseded — Phase 1A (by D-013) |
 | D-011 | Enforce score/status/value/relationship/idempotency invariants in application and database constraints where practical; use targeted indexes for dashboard and history queries. | Prevent invalid data and support known access patterns without indiscriminate indexes. | Accepted |
 | D-012 | Establish four persistent docs and update them as work proceeds; do not begin implementation until API contracts are defined and reviewed. | Preserves cross-chat continuity and prevents coding agents from defining the system by accident. | Accepted |
+| D-013 | Implemented Schema v1.0: Admin, Conversation (1→M Message), Lead (1→0..1 from Conversation), BANTState (1:1 with Lead via shared PK lead_id, typed dimension statuses, evidence, and nullable confidence fields [0.0, 1.0]), LeadScoreHistory (1→M from Lead), and RoutingAction (1→M from Lead, unique idempotency_key, action types: continue_chat/sales_alert/calendar_booking, statuses: pending/success/failed). | Authoritative implemented Schema v1.0 decision, superseding the pre-implementation conceptual ERD (D-010) for Phase 1A codebase. | Accepted (Phase 1A) |
 
 ## Database design record — Schema v1.0
+
+### Authoritative Implemented Schema (Phase 1A — Decision D-013)
+
+Implemented and committed Phase 1A relational schema:
+- `Conversation` 1—N `Message`
+- `Conversation` 1—0..1 `Lead`
+- `Lead` 1—1 `BANTState` (shared PK `lead_id`, typed dimension status enums, evidence text, nullable `*_confidence` floats in [0.0, 1.0])
+- `Lead` 1—N `LeadScoreHistory` (append-only score snapshots with optional `message_id`)
+- `Lead` 1—N `RoutingAction` (unique `idempotency_key`, action types: `continue_chat`, `sales_alert`, `calendar_booking`, statuses: `pending`, `success`, `failed`)
+- `Admin` (back-office account with bcrypt password hash and unique email)
+
+### Pre-implementation Conceptual Baseline (Historical / Superseded D-010)
 
 ```text
 Lead
