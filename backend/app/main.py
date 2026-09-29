@@ -8,7 +8,7 @@ from app.api.routes import router, websocket_conversation
 from app.persistence.database import _get_engine, init_db
 from app.services.auth import ensure_default_admin
 settings=get_settings()
-app=FastAPI(title="QualBot API",version="1.0.0",debug=settings.environment=="development",openapi_url=f"{settings.api_prefix}/openapi.json",docs_url=f"{settings.api_prefix}/docs",redoc_url=None)
+app=FastAPI(title="QualBot API",version="0.1.0",debug=settings.environment=="development",openapi_url=f"{settings.api_prefix}/openapi.json",docs_url=f"{settings.api_prefix}/docs",redoc_url=None)
 app.add_middleware(CORSMiddleware,allow_origins=[str(o).rstrip("/") for o in settings.cors_origins],allow_credentials=True,allow_methods=["GET","POST","PATCH"],allow_headers=["Authorization","Content-Type"])
 @app.exception_handler(HTTPException)
 async def http_exception_handler(_request,exc):

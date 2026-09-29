@@ -9,9 +9,12 @@ down_revision="cf9f780915ed"
 branch_labels=None
 depends_on=None
 def upgrade():
-    op.add_column("leads",sa.Column("operational_status",sa.String(length=20),nullable=False,server_default="new"))
-    op.create_check_constraint("ck_leads_operational_status","leads","operational_status IN ('new','contacted','converted','closed')")
-    op.alter_column("leads","operational_status",server_default=None)
+    with op.batch_alter_table("leads",schema=None) as batch:
+        batch.add_column(sa.Column("operational_status",sa.String(length=20),nullable=False,server_default="new"))
+        batch.create_check_constraint("ck_leads_operational_status","operational_status IN ('new','contacted','converted','closed')")
+    with op.batch_alter_table("leads",schema=None) as batch:
+        batch.alter_column("operational_status",server_default=None)
 def downgrade():
-    op.drop_constraint("ck_leads_operational_status","leads",type_="check")
-    op.drop_column("leads","operational_status")
+    with op.batch_alter_table("leads",schema=None) as batch:
+        batch.drop_constraint("ck_leads_operational_status",type_="check")
+        batch.drop_column("operational_status")

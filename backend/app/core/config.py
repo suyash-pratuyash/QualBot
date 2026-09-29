@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     admin_email: str="admin@qualbot.local"
     admin_password: str="qualbot-demo"
     calendly_booking_url: AnyHttpUrl|None=None
+    @field_validator("calendly_booking_url", mode="before")
+    @classmethod
+    def empty_calendly_url(cls, v):
+        return None if v in ("", None) else v
     @field_validator("api_prefix")
     @classmethod
     def validate_api_prefix(cls,v):

@@ -1,13 +1,20 @@
 """Pydantic request/response models for QualBot APIs."""
 from __future__ import annotations
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl, field_validator
 class APIModel(BaseModel):
     model_config=ConfigDict(from_attributes=True)
 class ErrorBody(APIModel):
     code:str; message:str; details:object|None=None
 class ErrorResponse(APIModel): error:ErrorBody
-class LoginRequest(APIModel): email:EmailStr; password:str=Field(min_length=1,max_length=200)
+class LoginRequest(APIModel):
+    email:str=Field(min_length=3,max_length=255)
+    password:str=Field(min_length=1,max_length=200)
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls,v):
+        if "@" not in v or v.startswith("@") or v.endswith("@"): raise ValueError("Invalid email address")
+        return v
 class LoginResponse(APIModel): access_token:str; token_type:str="bearer"; expires_in:int
 class MeResponse(APIModel): id:str; email:EmailStr; role:str="admin"
 class ConversationCreate(APIModel): visitor_id:str=Field(min_length=1,max_length=100); page_url:HttpUrl|None=None
