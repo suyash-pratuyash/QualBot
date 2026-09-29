@@ -4,7 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.core.config import get_settings
-from app.api.routes import router
+from app.api.routes import router, websocket_conversation
 from app.persistence.database import _get_engine, init_db
 from app.services.auth import ensure_default_admin
 settings=get_settings()
@@ -23,3 +23,4 @@ def startup():
     from sqlalchemy.orm import Session
     with Session(engine) as db: ensure_default_admin(db)
 app.include_router(router,prefix=settings.api_prefix)
+app.add_api_websocket_route("/ws/v1/conversations/{conversation_id}",websocket_conversation)

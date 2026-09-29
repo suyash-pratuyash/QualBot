@@ -4,7 +4,7 @@ import math
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
-from app.api.schemas import *
+from app.api.schemas import (ActionResponse, AnalyticsResponse, BANTDimension, BANTResponse, ConversationCreate, ConversationCreateResponse, ConversationResponse, HealthResponse, LeadDetailResponse, LeadListItem, LeadListResponse, LeadStatusResponse, LeadStatusUpdate, LoginRequest, LoginResponse, MeResponse)
 from app.domain.models import Conversation, Lead, Admin
 from app.persistence.database import get_db
 from app.services.auth import ensure_default_admin, issue_token, require_admin, verify_password
@@ -34,7 +34,7 @@ def me(admin:Admin=Depends(require_admin)): return {"id":admin.id,"email":admin.
 def create_conversation(payload:ConversationCreate,db:Session=Depends(get_db)):
     conversation=Conversation(visitor_identifier=payload.visitor_id,channel="web")
     db.add(conversation); db.commit(); db.refresh(conversation)
-    return conversation
+    return {"conversation_id":conversation.id,"status":conversation.status,"created_at":conversation.created_at}
 
 @router.get("/conversations/{conversation_id}",response_model=ConversationResponse)
 def get_conversation(conversation_id:str,db:Session=Depends(get_db)):
@@ -51,7 +51,7 @@ def list_leads(page:int=Query(1,ge=1),limit:int=Query(20,ge=1,le=100),status:str
     if max_score is not None: stmt=stmt.where(Lead.score<=max_score)
     total=db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     leads=db.scalars(stmt.offset((page-1)*limit).limit(limit)).all()
-    items=[LeadListItem.model_validate(l).model_dump() for l in leads]
+    items=[{"lead_id":l.id,"conversation_id":l.conversation_id,"score":l.score,"qualification_status":l.qualification_status,"name":l.name,"company":l.company,"email":l.email,"created_at":l.created_at} for l in leads]
     return {"items":items,"pagination":{"page":page,"limit":limit,"total":total,"pages":math.ceil(total/limit) if total else 0}}
 
 @router.get("/leads/{lead_id}",response_model=LeadDetailResponse)
@@ -91,7 +91,6 @@ def booking(lead_id:str,db:Session=Depends(get_db),admin:Admin=Depends(require_a
     if not url: return {"action":"booking","status":"unavailable","lead_id":lead_id,"provider":"calendly","url":None}
     return {"action":"booking","status":"available","lead_id":lead_id,"provider":"calendly","url":url}
 
-@router.websocket("/ws/v1/conversations/{conversation_id}")
 async def websocket_conversation(websocket:WebSocket,conversation_id:str):
     await websocket.accept()
     from app.persistence.database import _get_session_factory
