@@ -12,8 +12,6 @@ def upgrade():
     with op.batch_alter_table("leads",schema=None) as batch:
         batch.add_column(sa.Column("operational_status",sa.String(length=20),nullable=False,server_default="new"))
         batch.create_check_constraint("ck_leads_operational_status","operational_status IN ('new','contacted','converted','closed')")
-    with op.batch_alter_table("leads",schema=None) as batch:
-        batch.alter_column("operational_status",server_default=None)
 def downgrade():
     with op.batch_alter_table("leads",schema=None) as batch:
         batch.drop_constraint("ck_leads_operational_status",type_="check")

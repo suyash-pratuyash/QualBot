@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     admin_email: str="admin@qualbot.local"
     admin_password: str="qualbot-demo"
     calendly_booking_url: AnyHttpUrl|None=None
+    @field_validator("environment")
+    @classmethod
+    def validate_environment(cls, v):
+        if v not in {"development", "test", "production"}: raise ValueError("Unsupported environment")
+        return v
     @field_validator("calendly_booking_url", mode="before")
     @classmethod
     def empty_calendly_url(cls, v):
