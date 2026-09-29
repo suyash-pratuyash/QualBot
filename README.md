@@ -37,3 +37,7 @@ The current V1 demonstrates the core qualification loop end-to-end: React chat U
 4. Open the Vite URL shown in the terminal. The default demo admin is `admin@qualbot.local` / `qualbot-demo`; change these values before any shared deployment.
 
 For a high-intent demo, use a message containing a clear need, decision-maker authority, a concrete budget, and an immediate/short-term timeline. A configured `QUALBOT_CALENDLY_BOOKING_URL` enables the booking event; without it, the action remains explicitly unavailable rather than being fabricated.
+
+
+### Admin console
+The V1 UI includes an authenticated admin console for overview metrics and recent lead records. Use the demo administrator values documented in the local runbook when testing locally.
