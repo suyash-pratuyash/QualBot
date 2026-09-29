@@ -9,7 +9,7 @@ from sqlalchemy.engine import make_url
 PROJECT_ROOT=Path(__file__).resolve().parents[3]
 class Settings(BaseSettings):
     model_config=SettingsConfigDict(env_file=PROJECT_ROOT/".env",env_prefix="QUALBOT_",case_sensitive=False,extra="ignore")
-    environment: Literal["development","test","production"]="development"
+    environment: Literal["development","test","production"]=Field(default="development",validation_alias="QUALBOT_ENV")
     api_prefix: str="/api/v1"
     database_url: str="sqlite:///./qualbot.db"
     cors_origins: Annotated[list[AnyHttpUrl],NoDecode]=Field(default_factory=lambda:[AnyHttpUrl("http://localhost:5173")])
@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     gemini_api_key: SecretStr|None=None
     gemini_model: str="gemini-2.5-flash"
     gemini_timeout_seconds: float=8.0
-    jwt_secret: str="dev-only-change-this-secret"
+    jwt_secret: str="change-this-demo-secret-before-production-32chars"
     jwt_expiry_seconds: int=3600
     admin_email: str="admin@qualbot.local"
     admin_password: str="qualbot-demo"
