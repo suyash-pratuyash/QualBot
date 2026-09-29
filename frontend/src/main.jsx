@@ -1,13 +1,14 @@
-import React from "react";
-import { createRoot } from "react-dom/client";
+import React,{useEffect,useRef,useState} from "react";
+import {createRoot} from "react-dom/client";
 import "./styles.css";
-
-function App() {
-  return <main className="min-h-screen p-8 text-slate-900">QualBot foundation</main>;
-}
-
-createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-);
+const API=import.meta.env.VITE_API_BASE_URL||"http://localhost:8000/api/v1";
+const WS=API.replace(/^http/,"ws").replace(/\/api\/v1$/,"")+"/ws/v1";
+function ScoreRing({score}){return <div className="score-ring" style={{"--score":score}}><strong>{score}</strong><span>/ 100</span></div>}
+function BANTCard({bant}){const rows=[["Budget",bant?.budget],["Authority",bant?.authority],["Need",bant?.need],["Timeline",bant?.timeline]];return <section className="panel"><div className="panel-title">BANT profile</div>{rows.map(([label,v])=><div className="bant-row" key={label}><span>{label}</span><div><b>{v?.value||"Not captured"}</b><small>{v?.confidence!=null?(Math.round(v.confidence*100)+"% confidence"):"Awaiting evidence"}</small></div></div>)}</section>}
+function Chat({onState}){const [messages,setMessages]=useState([{role:"bot",text:"Hi — I’m QualBot. Tell me what you’re looking to improve, and I’ll help qualify your requirements."}]),[input,setInput]=useState(""),[connected,setConnected]=useState(false);const ws=useRef(null);
+useEffect(()=>{let socket;fetch(API+"/conversations",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({visitor_id:"demo-"+Date.now()})}).then(r=>r.json()).then(d=>{socket=new WebSocket(WS+"/conversations/"+d.conversation_id);socket.onopen=()=>setConnected(true);socket.onclose=()=>setConnected(false);socket.onmessage=e=>{const event=JSON.parse(e.data);if(event.type==="assistant_message")setMessages(m=>[...m,{role:"bot",text:event.message}]);if(["score_update","bant_update","qualification_update"].includes(event.type))fetch(API+"/conversations/"+d.conversation_id).then(r=>r.json()).then(onState)};ws.current=socket});return()=>socket?.close()},[onState]);
+function send(){if(!input.trim()||!ws.current||ws.current.readyState!==1)return;setMessages(m=>[...m,{role:"user",text:input.trim()}]);ws.current.send(JSON.stringify({type:"user_message",message:input.trim()}));setInput("")}
+return <div className="chat"><div className="chat-head"><div><b>QualBot</b><span>AI Lead Qualification</span></div><i className={connected?"online":""}>{connected?"LIVE":"CONNECTING"}</i></div><div className="messages">{messages.map((m,i)=><div className={"bubble "+m.role} key={i}>{m.text}</div>)}</div><div className="composer"><input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder="Tell me about your requirements..." disabled={!connected}/><button onClick={send}>Send</button></div></div>}
+function Dashboard({state}){return <aside className="sidebar"><div className="brand"><div className="logo">Q</div><div><b>QualBot</b><small>Lead Intelligence</small></div></div><div className="score-panel"><span>Current lead score</span><ScoreRing score={state?.lead_score||0}/><strong className="status">{(state?.qualification_status||"new").replaceAll("_"," ")}</strong></div><BANTCard bant={state?.bant}/><div className="demo-note"><b>Live qualification</b><span>Score and BANT update as the visitor talks. The backend remains authoritative.</span></div></aside>}
+function App(){const [state,setState]=useState(null);const stableState=React.useCallback(s=>setState(s),[]);return <main className="app"><header><span className="eyebrow">CONVERSATIONAL SALES INTELLIGENCE</span><h1>Turn conversations into <em>qualified leads.</em></h1><p>QualBot listens, extracts BANT signals and calculates a transparent lead-intent score in real time.</p></header><div className="workspace"><Dashboard state={state}/><section className="stage"><div className="stage-label">LIVE DEMO <span>•</span> Website qualification widget</div><Chat onState={stableState}/><div className="footer-note">Gemini interprets language when configured. Deterministic scoring and routing are always controlled by QualBot.</div></section></div></main>}
+createRoot(document.getElementById("root")).render(<React.StrictMode><App/></React.StrictMode>);

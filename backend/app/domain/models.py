@@ -301,6 +301,10 @@ class Lead(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         nullable=True,
         comment="Human-readable reason when status = disqualified",
     )
+    operational_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="new",
+        comment="Sales workflow status: new | contacted | converted | closed",
+    )
 
     # Relationships
     conversation: Mapped[Conversation] = relationship(
